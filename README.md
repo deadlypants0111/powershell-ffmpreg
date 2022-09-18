@@ -7,7 +7,7 @@
   - [Simplified Script Flow](#simplified-script-flow)
   - [Config In Detail](#config-in-detail)
 
-# About powershell-ffmpeg
+# About ffmpeg-powershell
 
 This repo contains a script that i've put together using powersell as the base language. The main purpose of this script is to use [FFmpeg](https://ffmpeg.org/) to encode/convert/compress video files in media folders. This allows you to standardize file sizes throughout your media library, also enforcing maximum resolutions for longer term storage.
 
