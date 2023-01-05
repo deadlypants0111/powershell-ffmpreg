@@ -3,3 +3,5 @@ contents.csv
 contents.txt
 encode_log.txt
 .skip
+encode.log
+*.log
