@@ -12,7 +12,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
         $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
         $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
     # Limits
-        $iLimitQueue = 1 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
+        $iLimitQueue = 0 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
         $iEncodeHours = 0 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
         If ($iLimitQueue -ne 0 -or $iEncodeHours -ne 0){$bEncodeLimit = $True}Else{$bEncodeLimit = $False} # If either of the limit controllers contain values above 0, then this is marked as `$True`
     # Exported Data
@@ -41,7 +41,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
         $sff_ar = 44100 # `-ar <int>` rate set audio sampling rate (in Hz). Source: User defined
         # `-s <str>` size set frame size (WxH or abbreviation). Source: $_.T_height 
         $sff_map = 0 # `-map <int>` -map [-]input_file_id[:stream_specifier][,sync_file_id[:stream_s set input stream mapping. Source: User defined
-        $sff_threads = 2 # `-threads <int>` (from 0 to INT_MAX) (default 1). Source: User Defined
+        $sff_threads = 1 # `-threads <int>` (from 0 to INT_MAX) (default 1). Source: User Defined
         # `-v <string>` set logging level. Source: Built into command
         # `-stats` print progress report during encoding
         # `<outputpath>` output path of file being created. Source: $outputpath
