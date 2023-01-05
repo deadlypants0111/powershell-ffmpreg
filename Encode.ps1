@@ -1,34 +1,56 @@
 $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the path of the script file being executed
 #config
     # Initial Config
-        Set-PSDebug -Off
-        $bVerbose = $False # If `$True` verbose messages are enabled in the console while script is running.
-        $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$bTestPath`. Destination file is saved to your `$sExportedDataPath`.
-        $bTestPath = $sRootPath+"\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
+        Set-PSDebug -Off # Disables debugging, only shows verbose (if enabled) and running commands
+        $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
+        $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestPath`. Destination file is saved to your `$sExportedDataPath`.
+        $sTestPath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
         $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
-        $sEncodePath = "$sRootPath\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
+        $sEncodePath = "D:\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
         $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
         $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
         $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
         $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
     # Limits
-        $iLimitQueue = 10 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
-        $iEncodeHours = 7 #No limit = `0`. Limits time in hours you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
+        $iLimitQueue = 1 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
+        $iEncodeHours = 0 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
         If ($iLimitQueue -ne 0 -or $iEncodeHours -ne 0){$bEncodeLimit = $True}Else{$bEncodeLimit = $False} # If either of the limit controllers contain values above 0, then this is marked as `$True`
     # Exported Data
         $bEncodeOnly = $True # When this is `$True`, only items identified as "needing encode" as per the `Detect Medtadata > Video Metadata > Check if encoding needed` section. If `$False` then all items will be added to the CSV regardless if encoding will take place for the file or not. *This does not change whether or not the file **will** be encoded, only if it is logged in the generated CSV file*
         $bDeleteCSV = $False # If `$False` then `contents.csv` will be deleted after the script is finished. If `$True` then `contents.csv` will **not** be deleted after the script is finished. Instead the next time it runs it will be written over.
         $bAppendLog = $True # If `$False` then when a new encoding session begins, the contents of `encode.log` are cleared. If `$True` then the contents of said text file will append until cleared manually.
         $bDeleteContents = $True # If `$False` then the `contents.txt` file generated at scanning will not be deleted after `contents.csv` is created. If `$True` then `contents.txt` will be deleted after `contents.csv` is created.
-    # Encode Config
+        $bDeleteSource = $True # If `$True` then the source video file for each encode will be deleted entirely after encode is complete. If `$False` then the source video file is moved to `$sEncodePath\old`
+    # Encode Confige
         $bRemoveBeforeScan = $True # If `$True` then  all files in `$sEncodePath` are deleted prior to initiated a scan for media
         $bEncodeAfterScan = $True # If `$False` then once the CSV is created the script skips the encoding process entirely. If `$True` then the script will encode all identified files after the CSV is generated.
-
+    # Bitrate Configuration
+        $iBitRate480 = 1000 # bitrate in kbps for video files with a vertical pixel count < 480
+        $iBitRate720 = 2000 # bitrate in kbps for video files with a verticle pixel count > 480 and a pixel count < 1000
+        $iBitRate1080 = 2500 # bitrate in kbps for video files with a verticle pixel count > 1000
+    # ffmpeg flags in order of use
+        # `-i <inputpath>` input path for source file 
+        # `-b <int>` video bitrate. Source: $_.T_Bits_Ps
+        # `-maxrate <int>` maximum bitrate tolerance (in bits/s). Requires bufsize to be set. (from INT_MIN to INT_MAX) (default 0). Source: $_.T_Bits_Ps
+        # `-minrate <int>` minimum bitrate tolerance (in bits/s). Most useful in setting up a CBR encode. It is of little use otherwise. (from INT_MIN to INT_MAX) (default 0). Source: $_.T_Bits_Ps
+        $sff_ab = '64k'# `-ab <str>` bitrate (in bits/s) (from 0 to INT_MAX) (default 128000). Source: User defined
+        $sff_vcodec = 'libx264' # `-vcodec <str>` force video codec (‘copy’ to copy stream). Source: User defined
+        $sff_acodec = 'aac' # `-acodec <str>` force audio codec (‘copy’ to copy stream). Source: User defined
+        $sff_strict = 2 # `-strict <int>` ED.VA… how strictly to follow the standards (from INT_MIN to INT_MAX) (default 0). Source: User defined
+        $sff_ac = 2 # `-ac <int>` channels set number of audio channels. Source: User defined
+        $sff_ar = 44100 # `-ar <int>` rate set audio sampling rate (in Hz). Source: User defined
+        # `-s <str>` size set frame size (WxH or abbreviation). Source: $_.T_height 
+        $sff_map = 0 # `-map <int>` -map [-]input_file_id[:stream_specifier][,sync_file_id[:stream_s set input stream mapping. Source: User defined
+        $sff_threads = 2 # `-threads <int>` (from 0 to INT_MAX) (default 1). Source: User Defined
+        # `-v <string>` set logging level. Source: Built into command
+        # `-stats` print progress report during encoding
+        # `<outputpath>` output path of file being created. Source: $outputpath
 #Functions
-    Function EncodeLog{
+    Function EncodeLog($string){
         $sTimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        $sLogStamp = $sTimeStamp+" "+$sBasename+" encoded in "+$($_.T_height)+"p at "+($($_.T_Bits_Ps)/1000)+"kbp/s | Originally "+$($_.Bits_Ps)/1000+"kbp/s"
+        $sLogStamp = "$sTimeStamp $string"
         write-output $sLogStamp | add-content $sExportedDataPath\encode.log
+        Write-Verbose -Message $string
     }
     Function ErrorLog{
         $sTimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm"
@@ -52,11 +74,11 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
         If ($bAppendLog -eq $False) {Clear-Content -Path $sExportedDataPath\encode.log} # Clears log file at start of encode if true, otherwise appends continuously
         If ($bDisableStatus -eq $False) {
             $iSteps = (get-content $sExportedDataPath\contents.csv).length
-            $iStep = 1
         } # If bDisableStatus is False then updates the gui terminal with status bar
+        $Istep = 0
         #Loop through contents.csv and encode each file identified
             Import-Csv $sExportedDataPath\contents.csv | ForEach-Object {
-                do {
+                if($bEncodeAfterScan -eq $True){
                     try{
                         if ($($_.encode) -eq "TRUE") {
                             If ($bDisableStatus -eq $False) {
@@ -71,19 +93,38 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                                 If ($bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $iStep/$iSteps" -Status "$sFilename" -PercentComplete $iPercent} # If bDisableStatus is False then updates the gui terminal with status bar
                                 Write-Verbose -Message "Working $sFilename"
                             #Create new encode
-                                ffmpeg -i "$($_.path)" -b $($_.T_Bits_Ps) -maxrate $($_.T_Bits_Ps) -minrate $($_.T_Bits_Ps) -ab 64k -vcodec libx264 -acodec aac -strict 2 -ac 2 -ar 44100 -s $($_.T_height) -map 0 -y -threads 2 -v quiet -stats $outputpath
+                                ffmpeg -i "$($_.path)" -b $($_.T_Bits_Ps) -maxrate $($_.T_Bits_Ps) -minrate $($_.T_Bits_Ps) -ab $sff_ab -vcodec $sff_vcodec -acodec $sff_acodec -strict $sff_strict -ac $sff_ac -ar $sff_ar -s $($_.T_height) -map $sff_map -y -threads $sff_threads -v quiet -stats $outputpath
+                                #ffmpeg -i "$($_.path)" -b $($_.T_Bits_Ps) -maxrate $($_.T_Bits_Ps) -minrate $($_.T_Bits_Ps) -ab 64k -vcodec libx264 -acodec aac -strict 2 -ac 2 -ar 44100 -s $($_.T_height) -map 0 -y -threads 2 -v quiet -stats $outputpath
                             #Check thar files still exist before removal
                                 $sSourcePath = Test-Path $($_.path)
                                 $sDestPath = Test-Path $outputpath
-                                if ($sDestPath -eq $True -and $sSourcePath -eq $True) {
+                                $iDestSize = (Get-Item $outputpath).Length/1MB
+                                if ($sDestPath -eq $True -and $sSourcePath -eq $True -and $iDestSize -gt 1) {
                                     #Remove input file
-                                        remove-item $($_.path)
+                                        If ($bDeleteSource -eq $True){
+                                            # Delete input file if set to true
+                                            remove-item $($_.path)
+                                            EncodeLog("Deleted source file")
+                                        }
+                                        Else{
+                                            # Otherwise relocate it
+                                            Move-Item -Path $($_.path) -Destination "$sEncodePath\old" -Force
+                                            EncodeLog("Moved source file to $sEncodePath\old")
+                                        }
+                                        
                                     #Move new file to original folder
                                         move-item $outputpath -Destination $sInputContainer
                                     #Populate log of encoded files
-                                        EncodeLog
+                                        $iTargetBits = ($($_.T_Bits_Ps)/1000)
+                                        $iOriginBits = ($($_.Bits_Ps)/1000)
+                                        EncodeLog "$sBasename encoded in $($_.T_height)p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
                                         Write-Verbose -Message "Complete"
                                         $iStep++
+                                }
+                                Else{
+                                    If($iDestSize -lt 1){EncodeLog("Aborting file overwrite as encode file is less than 1MB")}
+                                    Elseif($sDestPath -eq $False){EncodeLog("Aborting file overwrite as destination path does not exist anymore")}
+                                    Else{EncodeLog("Aborting file overwrite as encode file does not exist anymore")}
                                 }
                         }
                         If ($bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $iStep/$iSteps" -Status "$sFilename" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar
@@ -92,14 +133,17 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                             If ($iLimitQueue -gt 0 -and $iStep -ge $iLimitQueue){
                                 # Confirms if limit of concurrent encodes has been reached
                                 $bEncodeAfterScan = $False
+                                EncodeLog("Encode Limit Reached as queue has processed $iLimitQueue file(s)")
                             }
                             If ($iEncodeHours -gt 0)
                             {
                                 # Confirms the script is allowed to continue running at this time
                                 $DateTime = Get-Date
-                                If ($EndTime -ge $DateTime){$bEncodeAfterScan = $False}
+                                If ($DateTime -ge $EndTime){
+                                    $bEncodeAfterScan = $False
+                                    EncodeLog("Encode Limit Reached as queue been reached the $iEncodeHours hour limit")
+                                }
                             }
-
                         }
                     }
                     catch{
@@ -107,14 +151,13 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                         $sErrorMessage = $_
                         ErrorLog
                     }
-                } while (
-                    $bEncodeAfterScan -eq $True
-                )
+                }
             }
     }
 # End Fnctions
 #Initialize
 try {
+    EncodeLog("Initializing")
     $sErrorTask = "Initializing"
     Set-Location $sRootPath # set directory of root folder for monitored videos
     $EndTime = Get-Date
@@ -128,6 +171,7 @@ catch{
 } 
 # Check folders before scanning
     try{
+        EncodeLog("Checking Folders")
         $sErrorTask = "Checking Folders"
         If ((Test-Path -Path $sRootPath -PathType Container) -eq $False) {
             $sErrorMessage = "Root Path not found, aborting script"
@@ -153,10 +197,11 @@ catch{
     #Generate Contents
         #Generate Contents Lists and repeat based on number of directories
             try{
+                EncodeLog("Scanning Files")
                 $sErrorTask = "Generating Contents List"
                 out-file $sExportedDataPath\contents.txt #create empty contents file
             If ($bTest -eq $True){
-                $bTestPath | Add-Content $sExportedDataPath\contents.txt # If testmode active, export single path to contents.txt 
+                $sTestPath | Add-Content $sExportedDataPath\contents.txt # If testmode active, export single path to contents.txt 
                 #Otherwise follow default scan export
             }ElseIf ($bRecursiveSearch -eq $False){
                 $sDirectoriesCSV.Split(",") | ForEach-Object {
@@ -200,13 +245,13 @@ catch{
                         
                             # Logic for desired bitrate based on video height
                                 if ([int]$iHeight -le 480) {
-                                    $kbps = 1000
+                                    $kbps = $iBitRate480
                                     $theight = "640x480"
                                 }elseif ([int]$iHeight -ge 1000) {
-                                    $kbps = 2500
+                                    $kbps = $iBitRate1080
                                     $theight = "1920x1080"
                                 }else {
-                                    $kbps = 2000
+                                    $kbps = $iBitRate720
                                     $theight = "1280x720"
                                 }
                         
@@ -249,9 +294,14 @@ catch{
                 }
             )
 #Export CSV
+    EncodeLog("Exporting File List")
     $ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
     If ($bDisableStatus -eq $False) {Write-Progress -Activity $activity -Status "Ready" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar         
     If ($bDeleteContents -eq $True) {remove-item $sExportedDataPath\contents.txt}
-    If ($bEncodeAfterScan -eq $True) {BeginEncode} #Begin video encode if turned on in config
+    If ($bEncodeAfterScan -eq $True) {
+        EncodeLog("Begining Encode")
+        BeginEncode
+        EncodeLog("Encode Finished")
+    } #Begin video encode if turned on in config
     If ($bDeleteCSV -eq $True) {remove-item $sExportedDataPath\contents.csv} #Remove contents csv if marked true in config
 
