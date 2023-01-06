@@ -6,7 +6,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
         $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestPath`. Destination file is saved to your `$sExportedDataPath`.
         $sTestPath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
         $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
-        $sEncodePath = "D:\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
+        $sEncodePath = "D:\Encode" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
         $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
         $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
         $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
@@ -117,7 +117,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                                     #Populate log of encoded files
                                         $iTargetBits = ($($_.T_Bits_Ps)/1000)
                                         $iOriginBits = ($($_.Bits_Ps)/1000)
-                                        EncodeLog "$sBasename encoded in $($_.T_height)p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
+                                        EncodeLog "($iStep) $sBasename encoded in $($_.T_height)p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
                                         Write-Verbose -Message "Complete"
                                         $iStep++
                                 }
@@ -304,4 +304,3 @@ catch{
         EncodeLog("Encode Finished")
     } #Begin video encode if turned on in config
     If ($bDeleteCSV -eq $True) {remove-item $sExportedDataPath\contents.csv} #Remove contents csv if marked true in config
-
