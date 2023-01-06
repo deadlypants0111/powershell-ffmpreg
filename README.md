@@ -9,7 +9,7 @@
 
 # About ffmpeg-ps1
 
-This repo contains a script that i've put together using powersell as the base language. The main purpose of this script is to use [FFmpeg](https://ffmpeg.org/) to encode/convert/compress video files in media folders. This allows you to standardize file sizes throughout your media library, also enforcing maximum resolutions for longer term storage.
+This repo contains a script that i've put together using powersell as the base language. The main purpose of this script is to use [FFmpeg](https://ffmpeg.org/) to encode/convert/compress video files in media folders. This allows you to standardize file sizes throughout your media library, also enforcing maximum resolutions for longer term storage or consistency.
 
 ## Requirements
 
@@ -17,15 +17,22 @@ This repo contains a script that i've put together using powersell as the base l
 
   - [How to install ffmpeg](https://gist.github.com/barbietunnie/47a3de3de3274956617ce092a3bc03a1) (Github)
 
-- Powershell - it is availble in multiple operating systems including but not limited to:
+- Powershell ([How to install](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.3)) - it is availble in multiple operating systems including but not limited to:
   - Windows 7, 8, 10
   - Windows Server
   - macOS
   - Debian 9
 
-## How I use this script
+## User Case: Media Server
 
-I have a plex server set up where all the users in my household can stream and watch any of our stored TV shows, movies and anime. This script is set by my OS (in this case [Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-start-page)) to run twice a day to scan media, and encode files if they are over a certain size/quality threshhold. By encoding needlessly large files it saves network resources when streaming the files, in addition to lessening the burdon of streaming on the server allowing for better overall streaming experience as well as allowing my home media server to run its other services with less interruption. This primarily goes after any media sources that are provided as either RAW or with low media compression.
+Our user has a home media server that runs on Windows PC in which all users within their household can stream and watch any of their stored anime, movies and TV shows. Over time they noticed that they are experiencing a couple of key issues.
+
+- When saving the media to their server newer files are coming in increasingly larger file sizes and resolutions
+- They are experiencing increased load trying to transocde media on the fly with their media client that is not a direct stream. Examples include:
+  - Downscaling
+  - Subtitles that are being burned in
+  
+ While looking for solutions they only want to install the bare minimum to get a working solution. Using [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview?view=powershell-7.3) they are able to create and run a shell intigrated script that uses [FFmpeg](https://ffmpeg.org/about.html) to convert their oversized video files to a file format and size that fits their needs. This script is run through their operating systems task automation service ([Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-start-page)/[Cron Job](https://en.wikipedia.org/wiki/Cron)/other) they can have the script run atumatically on a regular basis to maintain their library.
 
 ## Simplified Script Flow
 
