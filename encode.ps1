@@ -1,5 +1,5 @@
 $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the path of the script file being executed
-#config
+#region config
     # Initial Config
     Set-PSDebug -Off # Disables debugging, only shows verbose (if enabled) and running commands
     $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
@@ -45,7 +45,8 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     # `-v <string>` set logging level. Source: Built into command
     # `-stats` print progress report during encoding
     # `<outputpath>` output path of file being created. Source: $outputpath
-#Functions
+#endregion
+#region functions
     Function EncodeLog($string){
         $sTimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm"
         $sLogStamp = "$sTimeStamp $string"
@@ -154,8 +155,8 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                 }
             }
     }
-# End Fnctions
-#Initialize
+#endregion
+#region initialize
 try {
     EncodeLog("Initializing")
     $sErrorTask = "Initializing"
@@ -169,7 +170,8 @@ catch{
     $sErrorMessage = $_
     ErrorLog
 } 
-# Check folders before scanning
+#endregion
+#region confirm directories
     try{
         EncodeLog("Checking Folders")
         $sErrorTask = "Checking Folders"
@@ -193,7 +195,8 @@ catch{
         $sErrorMessage = $_
         ErrorLog
     }
-# Start Scanning
+#endregion
+#region scan
     #Generate Contents
         #Generate Contents Lists and repeat based on number of directories
             try{
@@ -293,6 +296,7 @@ catch{
                     }
                 }
             )
+#endregion
 #Export CSV
     EncodeLog("Exporting File List")
     $ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
