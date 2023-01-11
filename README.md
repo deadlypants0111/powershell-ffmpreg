@@ -69,7 +69,11 @@ When it come to configuring for use you may want to modify certain options depen
   $bDeleteSource = $True # If `$True` then the source video file for each encode will be deleted entirely after encode is complete. If `$False` then the source video file is moved to `$sEncodePath\old`
 # Encode Confige
   $bRemoveBeforeScan = $True # If `$True` then  all files in `$sEncodePath` are deleted prior to initiated a scan for media
-  $bEncodeAfterScan = $True # If `$False` then once the CSV is created the script skips the encoding process entirely. If `$True` then the script will encode all identified files after the CSV is generated.
+  $iEncodeOrder = 2
+    # If `0` then script will stop running and not continue past it's current step
+    # If `1` then script will log data to CSV files but not encode any files
+    # If `2` then script will encode files after CSV is generated
+    # If `3` then script will encode files as they are detected without adding them to a CSV file
 # Bitrate Configuration
   $iBitRate480 = 1000 # bitrate in kbps for video files with a vertical pixel count < 480
   $iBitRate720 = 2000 # bitrate in kbps for video files with a verticle pixel count > 480 and a pixel count < 1000
@@ -90,5 +94,5 @@ When it come to configuring for use you may want to modify certain options depen
   $sff_threads = 2 # `-threads <int>` (from 0 to INT_MAX) (default 1). Source: User Defined
   # `-v <string>` set logging level. Source: Built into command
   # `-stats` print progress report during encoding
-  # `<outputpath>` output path of file being created. Source: $outputpath
+  # `<outputpath>` output path of file being created. Source: $n_path
 ```
