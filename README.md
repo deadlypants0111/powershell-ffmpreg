@@ -48,7 +48,7 @@ When it come to configuring for use you may want to modify certain options depen
 ```powershell
 # Initial Config
   Set-PSDebug -Off # Disables debugging, only shows verbose (if enabled) and running commands
-  $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
+  $bVerbose = $False # If `$True` verbose messages are enabled in the console while script is running.
   $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestPath`. Destination file is saved to your `$sExportedDataPath`.
   $sTestPath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
   $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
