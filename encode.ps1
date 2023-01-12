@@ -6,7 +6,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestPath`. Destination file is saved to your `$sExportedDataPath`.
     $sTestPath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
     $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
-    $sEncodePath = "D:\Encode" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
+    $sEncodePath = "D:\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
     $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
     $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
     $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
@@ -23,7 +23,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bDeleteSource = $True # If `$True` then the source video file for each encode will be deleted entirely after encode is complete. If `$False` then the source video file is moved to `$sEncodePath\old`
 # Encode Confige
     $bRemoveBeforeScan = $True # If `$True` then  all files in `$sEncodePath` are deleted prior to initiated a scan for media
-    $iEncodeOrder = 1
+    $iEncodeOrder = 3
         # If `0` then script will stop running and not continue past it's current step
         # If `1` then script will log data to CSV files but not encode any files
         # If `2` then script will encode files after CSV is generated
@@ -87,7 +87,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                     
                     $sInputContainer = split-path -path $s_path
                     If ($bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $iStep/$iSteps" -Status "$sFilename" -PercentComplete $iPercent} # If bDisableStatus is False then updates the gui terminal with status bar
-                    Write-Verbose -Message "Working $sFilename"
+                    EncodeLog("Working $sFilename")
                 #Create new encode
                     ffmpeg -i "$s_path" -b $t_bits -maxrate $t_bits -minrate $t_bits -ab $sff_ab -vcodec $sff_vcodec -acodec $sff_acodec -strict $sff_strict -ac $sff_ac -ar $sff_ar -s $t_height -map $sff_map -y -threads $sff_threads -v quiet -stats $n_path
                     #ffmpeg -i "$($_.path)" -b $($_.T_Bits_Ps) -maxrate $($_.T_Bits_Ps) -minrate $($_.T_Bits_Ps) -ab 64k -vcodec libx264 -acodec aac -strict 2 -ac 2 -ar 44100 -s $($_.T_height) -map 0 -y -threads 2 -v quiet -stats $n_path
@@ -104,8 +104,8 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                             }
                             Else{
                                 # Otherwise relocate it
-                                Move-Item -Path $s_path -Destination "$sEncodePath\old" -Force
-                                EncodeLog("Moved source file to $sEncodePath\old")
+                                Move-Item -Path $s_path -Destination "$sEncodePath\old\$sBasename" -Force
+                                EncodeLog("Moved source file to $sEncodePath\old\$sBasename")
                             }
                             
                         #Move new file to original folder
@@ -286,7 +286,7 @@ catch{
                                     } # Check if bitrate is greater than target kbp/s if so mark for encode
                                 
                                 #Verify Encode Order
-                                    if($iEncodeOrder -eq 3){
+                                    if($iEncodeOrder -eq 3 -and $bEncode -eq $True){
                                         Write-Verbose -Message 'Encoding now as $iEncodeOrder is set to 3'
                                         EncodeNow $iBits $iHeight $iScaleBits $theight $bEncode $sContentsLine
                                     }elseif ($iEncodeOrder -eq 1 -or $iEncodeOrder -eq 2) {
@@ -348,3 +348,4 @@ catch{
         EncodeLog('Deleting contents.csv as $bDeleteCSV is equal to True')
         remove-item $sExportedDataPath\contents.csv
     } 
+    EncodeLog("Complete")
