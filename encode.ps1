@@ -5,14 +5,14 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
     $bTest = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestPath`. Destination file is saved to your `$sExportedDataPath`.
     $sTestPath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
-    $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
+    $sRootPath = "/home/kyle/Downloads/4high res" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
     $sEncodePath = "D:\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
     $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
-    $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
+    $bRecursiveSearch = $True # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
     $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
     $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
 # Limits
-    $iLimitQueue = 0 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
+    $iLimitQueue = 3 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
     $iEncodeHours = 0 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
     If ($iLimitQueue -ne 0 -or $iEncodeHours -ne 0){$bEncodeLimit = $True}Else{$bEncodeLimit = $False} # If either of the limit controllers contain values above 0, then this is marked as `$True`
 # Exported Data
@@ -94,7 +94,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                 #Check thar files still exist before removal
                     $sSourcePath = Test-Path $s_path
                     $sDestPath = Test-Path $n_path
-                    $iDestSize = (Get-Item $n_path).Length/1MB
+                    $iDestSize = (Get-Item $n_path).Length/1MB 
                     if ($sDestPath -eq $True -and $sSourcePath -eq $True -and $iDestSize -gt 1) {
                         #Remove input file
                             If ($bDeleteSource -eq $True){
@@ -113,9 +113,9 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                         #Populate log of encoded files
                             $iTargetBits = ($t_bits/1000)
                             $iOriginBits = ($t_bits/1000)
-                            $iStepq++
+                            $global:iStepq++
                             $iStep++
-                            EncodeLog "($iStepq) $sBasename encoded in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
+                            EncodeLog "($global:iStepq) $sBasename encoded in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
                             Write-Verbose -Message "Complete"
                     }
                     Else{
@@ -124,21 +124,21 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                         Else{EncodeLog("Aborting file overwrite as encode file does not exist anymore")}
                     }
             }
-            If ($bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $iStep/$iSteps" -Status "$sFilename" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar
-            If ($bEncodeLimit -eq $True){
+            If ($global:bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $global:iStep/$global:iSteps" -Status "$global:sFilename" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar
+            If ($global:bEncodeLimit -eq $True){
                 # Checks current stats against encode limits
-                If ($iLimitQueue -gt 0 -and $iStepq -ge $iLimitQueue){
+                If ($global:iLimitQueue -gt 0 -and $global:iStepq -ge $global:iLimitQueue){
                     # Confirms if limit of concurrent encodes has been reached
-                    $iEncodeOrder = 0
-                    EncodeLog("Encode Limit Reached as queue has processed $iLimitQueue file(s)")
+                    $global:iEncodeOrder = 0
+                    EncodeLog("Encode Limit Reached as queue has processed $global:iLimitQueue file(s)")
                 }
-                If ($iEncodeHours -gt 0)
+                If ($global:iEncodeHours -gt 0)
                 {
                     # Confirms the script is allowed to continue running at this time
                     $DateTime = Get-Date
                     If ($DateTime -ge $EndTime){
-                        $iEncodeOrder = 0
-                        EncodeLog("Encode Limit Reached as queue been reached the $iEncodeHours hour limit")
+                        $global:iEncodeOrder = 0
+                        EncodeLog("Encode Limit Reached as queue been reached the $global:iEncodeHours hour limit")
                     }
                 }
             }
@@ -236,6 +236,7 @@ catch{
         #Start grabbing metadata based on contents
             $iSteps = (get-content $sExportedDataPath\contents.txt).length
             $iStep = 0
+            $global:iStepq = 0
             $iPercent = 0
             $ffmpeg =@(
                 foreach($sContentsLine in Get-Content $sExportedDataPath\contents.txt){
