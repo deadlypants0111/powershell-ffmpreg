@@ -113,10 +113,10 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                         #Populate log of encoded files
                             $iTargetBits = ($t_bits/1000)
                             $iOriginBits = ($t_bits/1000)
-                            EncodeLog "($iStepq) $sBasename encoded in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
-                            Write-Verbose -Message "Complete"
                             $iStepq++
                             $iStep++
+                            EncodeLog "($iStepq) $sBasename encoded in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
+                            Write-Verbose -Message "Complete"
                     }
                     Else{
                         If($iDestSize -lt 1){EncodeLog("Aborting file overwrite as encode file is less than 1MB")}
