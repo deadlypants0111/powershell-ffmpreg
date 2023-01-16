@@ -11,7 +11,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
     $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
     $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
-# Limits
+    # Limits
     $iLimitQueue = 0 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
     $iEncodeHours = 0 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
     If ($iLimitQueue -ne 0 -or $iEncodeHours -ne 0){$bEncodeLimit = $True}Else{$bEncodeLimit = $False} # If either of the limit controllers contain values above 0, then this is marked as `$True`
@@ -112,9 +112,9 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                             move-item $n_path -Destination $sInputContainer
                         #Populate log of encoded files
                             $iTargetBits = ($t_bits/1000)
-                            $iOriginBits = ($t_bits/1000)
+                            $iOriginBits = ($o_bits/1000)
                             $global:iStepq++
-                            $iStep++
+                            $global:iStep++
                             EncodeLog "($global:iStepq) $sBasename encoded in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
                             Write-Verbose -Message "Complete"
                     }
