@@ -5,12 +5,12 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
     $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
     $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
-    $sEncodePath = "D:\Encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
+    $sEncodePath = "$sScriptPath\encode" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
     $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
     $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
         $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
     # Script Testing
-    $bTestFlow = $True # If `$True` the script will follow through all normal steps without actually encoding, moving, or deleting video files
+    $bTestFlow = $False # If `$True` the script will follow through all normal steps without actually encoding, moving, or deleting video files
     $bTestSingleFile = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestSinglePath`. Destination file is saved to your `$sExportedDataPath`.
     $sTestSinglePath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
     # Execution Limits
