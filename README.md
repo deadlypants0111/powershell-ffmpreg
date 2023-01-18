@@ -37,8 +37,8 @@ Our user has a home media server that runs on Windows PC in which all users with
 ## Simplified Script Flow
 
 1. Powershell begins scanning all indicated directories. Each file and folder under that path is added to contents.txt
-1. Powershell will begin scanning through each file individually, skipping folders, and and attempts to determine current bitrate, resolution and calculate if the file requires encoding when compared to presets. All files scanned are added to `contents.csv` with the scanned data based on configuration.
-1. When `contents.csv` is generated powershell will begin going through each line. If encoding is required it will begin the encode operation by passing through information to ffmpeg.
+1. Powershell will begin scanning through each file individually, skipping folders, and and attempts to determine current bitrate, resolution and calculate if the file requires encoding when compared to presets.
+1. Once file data has been determined it will begin encoding the new file.
 1. When the file encode is complete, it will dispose of the source file and move the new file to the same directory with the same naming convention.
 
 ## Configuration
