@@ -5,3 +5,5 @@ encode_log.txt
 .skip
 encode.log
 *.log
+encode/*
+test.ps1
