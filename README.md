@@ -18,10 +18,10 @@ This repo contains a script that i've put together using powersell as the base l
   - [How to install ffmpeg](https://gist.github.com/barbietunnie/47a3de3de3274956617ce092a3bc03a1) (Github)
 
 - Powershell ([How to install](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.3)) - it is availble in multiple operating systems including but not limited to:
-  - Windows 7, 8, 10
+  - Windows
   - Windows Server
   - macOS
-  - Debian 9
+  - Debian
 
 ## User Case: Media Server
 
