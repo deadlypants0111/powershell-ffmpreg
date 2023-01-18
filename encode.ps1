@@ -5,7 +5,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bVerbose = $True # If `$True` verbose messages are enabled in the console while script is running.
     $bDisableStatus = $True # Set to true if you wish to disable the calculating and displaying of status/progress bars in the script (can increase performance)
     $sRootPath = "D:" # This is the root file path you want power-shell to begin scanning for media if you are wanting to scan all child items of this directory. *This becomes very important if you have `$bRecursiveSearch` set to `$False`*.
-    $sEncodePath = "$sScriptPath\encode" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
+    $sEncodePath = "$sScriptPath\encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
     $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
     $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
         $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
@@ -95,7 +95,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                     
                     $sInputContainer = split-path -path $s_path
                     If ($bDisableStatus -eq $False) {Write-Progress -Activity "Encoding: $iStep/$iSteps" -Status "$sFilename" -PercentComplete $iPercent} # If bDisableStatus is False then updates the gui terminal with status bar
-                    EncodeLog("Working $sFilename")
+                    EncodeLog("Working '$sFilename'")
                 #Create new encode
                     If(!$bTestFlow){ffmpeg -i "$s_path" -b $t_bits -maxrate $t_bits -minrate $t_bits -ab $sff_ab -vcodec $sff_vcodec -acodec $sff_acodec -strict $sff_strict -ac $sff_ac -ar $sff_ar -s $t_height -map $sff_map -y -threads $sff_threads -v quiet -stats $n_path}
                 #Check thar files still exist before removal
@@ -113,7 +113,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                             }Else{
                                 # Otherwise relocate it
                                 Move-Item -Path $s_path -Destination "$sEncodePath\old\$sBasename" -Force
-                                EncodeLog("Moved source file to $sEncodePath\old\$sBasename")
+                                EncodeLog("Moved source file to '$sEncodePath\old\$sBasename'")
                             }
                             
                         #Move new file to original folder
@@ -258,9 +258,9 @@ catch{
                             If ($bDisableStatus -eq $False) {Write-Progress -Activity $activity -Status "Progress:" -PercentComplete $iPercent} # If bDisableStatus is False then updates the gui terminal with status bar
                             #Check file folder and parent folder for ".skip" file to skip the encoding of these folders
                                 $sFilePath = Split-Path -Path $sContentsLine
-                                $sSkipPath = $sFilePath + "\.skip"
+                                $sSkipPath = "$sFilePath\.skip"
                                 $sParentPath = Split-path -Parent $sContentsLine
-                                $sParentSkipPath = $sParentPath + "\.skip"
+                                $sParentSkipPath = "$sParentPath\.skip"
                             #If skip file not found in either path then get video metadata
                                 $bScanFile = $True # Reset ScanFile for each item in contents.txt
                                 If ($bTestSingleFile -eq $False) {
@@ -290,11 +290,11 @@ catch{
                                     If($bTestSingleFile -eq $True) {$bEncode = $True} 
                                     Elseif($iBits -eq "N/A"){
                                         $bEncode = $False
-                                        Write-Verbose -Message "Encoding determined not needed for path - $sContentsLine"
+                                        Write-Verbose -Message "Encoding determined not needed for path - '$sContentsLine'"
                                     }
                                     ElseIf ([int]$iBits -gt $iScaleBits*1.3) {$bEncode = $True} else {
                                         $bEncode = $False
-                                        Write-Verbose -Message "Encoding determined not needed for path - $sContentsLine"
+                                        Write-Verbose -Message "Encoding determined not needed for path - '$sContentsLine'"
                                     } # Check if bitrate is greater than target kbp/s if so mark for encode
                                 
                                 #Verify Encode Order
@@ -305,22 +305,22 @@ catch{
                                         # Add data to array
                                         If ($bTestSingleFile -eq $True) {
                                             AddtoCSV
-                                            Write-Verbose -Message "Adding to CSV as bTest is True | $sContentsLine"
+                                            Write-Verbose -Message "Adding to CSV as bTest is True | '$sContentsLine'"
                                         } #Encode test path even if it doesnt need it
                                         ElseIf ($bEncodeOnly -eq $True) {
                                             #If encode only is true, only import items needing encode into csv
                                             If ($bEncode -eq $True) {
                                                 AddtoCSV
-                                                Write-Verbose -Message "Adding to CSV as bEncode is True | $sContentsLine"
+                                                Write-Verbose -Message "Adding to CSV as bEncode is True | '$sContentsLine'"
                                             }
                                         }Else {
                                             #If encode only is false, import all items into csv
                                             AddtoCSV
-                                            Write-Verbose -Message "Adding to CSV as bEncode is False | $sContentsLine"
+                                            Write-Verbose -Message "Adding to CSV as bEncode is False | '$sContentsLine'"
                                         }
                                     }
                             }Else {
-                                Write-Verbose -Message "Skip file exists, or path is folder. Skipping - $sContentsLine"
+                                Write-Verbose -Message "Skip file exists, or path is folder. Skipping - '$sContentsLine'"
                             }
                             If ($bDisableStatus -eq $False) {
                                 $iStep++
