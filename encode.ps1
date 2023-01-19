@@ -23,6 +23,16 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bAppendLog = $True # If `$False` then when a new encoding session begins, the contents of `encode.log` are cleared. If `$True` then the contents of said text file will append until cleared manually.
     $bDeleteContents = $True # If `$False` then the `contents.txt` file generated at scanning will not be deleted after `contents.csv` is created. If `$True` then `contents.txt` will be deleted after `contents.csv` is created.
     $bDeleteSource = $True # If `$True` then the source video file for each encode will be deleted entirely after encode is complete. If `$False` then the source video file is moved to `$sEncodePath\old`
+    $s_CSVSort = $null # If not `$null` then before the CSV is created, the contents will be sorted by the indicated column header. See below for examples.
+        # 'Origin_Bits_Ps' = Current media bitrate in bits per second
+        # 'Origin_Height' = Current pixel height of media
+        # 'Target_Bits_Ps' = Target media bitrate in bits per second
+        # 'Target_Resolution' = Target media resolution in pixels
+        # 'Encode' = True or False of media to be encoded
+        # 'File_Size_MB' = Current file size of media in mega bytes
+        # 'Modif_Date' = Media modification date
+        # 'Path' = Media path
+    $b_CSVAscending = $True # If `$True` then when the CSV file is sorted, it will be in ascending order (Oldest/lowest first), otherwise it will be in decenging order
 # Encode Settings
     $bRemoveBeforeScan = $True # If `$True` then  all files in `$sEncodePath` are deleted prior to initiated a scan for media
     $iEncodeOrder = 3
@@ -42,16 +52,16 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $iBitRate1080 = 2500 # bitrate in kbps for video files with a verticle pixel count > 1000
 # ffmpeg flags in order of use
     # `-i <inputpath>` input path for source file 
-    # `-b <int>` video bitrate. Source: $_.T_Bits_Ps
-    # `-maxrate <int>` maximum bitrate tolerance (in bits/s). Requires bufsize to be set. (from INT_MIN to INT_MAX) (default 0). Source: $_.T_Bits_Ps
-    # `-minrate <int>` minimum bitrate tolerance (in bits/s). Most useful in setting up a CBR encode. It is of little use otherwise. (from INT_MIN to INT_MAX) (default 0). Source: $_.T_Bits_Ps
+    # `-b <int>` video bitrate. Source: $_.Target_Bits_Ps
+    # `-maxrate <int>` maximum bitrate tolerance (in bits/s). Requires bufsize to be set. (from INT_MIN to INT_MAX) (default 0). Source: $_.Target_Bits_Ps
+    # `-minrate <int>` minimum bitrate tolerance (in bits/s). Most useful in setting up a CBR encode. It is of little use otherwise. (from INT_MIN to INT_MAX) (default 0). Source: $_.Target_Bits_Ps
     $sff_ab = '64k'# `-ab <str>` bitrate (in bits/s) (from 0 to INT_MAX) (default 128000). Source: User defined
     $sff_vcodec = 'libx264' # `-vcodec <str>` force video codec (‘copy’ to copy stream). Source: User defined
     $sff_acodec = 'aac' # `-acodec <str>` force audio codec (‘copy’ to copy stream). Source: User defined
     $sff_strict = 2 # `-strict <int>` ED.VA… how strictly to follow the standards (from INT_MIN to INT_MAX) (default 0). Source: User defined
     $sff_ac = 2 # `-ac <int>` channels set number of audio channels. Source: User defined
     $sff_ar = 44100 # `-ar <int>` rate set audio sampling rate (in Hz). Source: User defined
-    # `-s <str>` size set frame size (WxH or abbreviation). Source: $_.T_height 
+    # `-s <str>` size set frame size (WxH or abbreviation). Source: $_.Target_Resolution 
     $sff_map = 0 # `-map <int>` -map [-]input_file_id[:stream_specifier][,sync_file_id[:stream_s set input stream mapping. Source: User defined
     $sff_threads = 1 # `-threads <int>` (from 0 to INT_MAX) (default 1). Source: User Defined
     # `-v <string>` set logging level. Source: Built into command
@@ -73,11 +83,13 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     Function AddtoCSV {
         # Adds current scanned item to Encode.csv if it meets the requirements
         [pscustomobject]@{
-            Bits_Ps = $iBits
-            height = $iHeight
-            T_Bits_Ps = $iScaleBits
-            T_height = $theight
+            Origin_Bits_Ps = $iBits
+            Origin_Height = $iHeight
+            Target_Bits_Ps = $iScaleBits
+            Target_Resolution = $theight
             Encode = $bEncode
+            File_Size_MB = $iFileSize
+            Modif_Date = $sModifDate
             Path = $sContentsLine
         }
     }
@@ -173,7 +185,7 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
             Import-Csv $sExportedDataPath\contents.csv | ForEach-Object {
 
                 if($iEncodeOrder -eq 2){
-                    EncodeNow $($_.Bits_Ps) $($_.height) $($_.t_bits_ps) $($_.t_height) $($_.encode) $($_.path)
+                    EncodeNow $($_.Origin_Bits_Ps) $($_.Origin_Height) $($_.Target_Bits_Ps) $($_.Target_Resolution) $($_.encode) $($_.path)
                 }
             }
     }
@@ -296,7 +308,11 @@ catch{
                                         $bEncode = $False
                                         Write-Verbose -Message "Encoding determined not needed for path - '$sContentsLine'"
                                     } # Check if bitrate is greater than target kbp/s if so mark for encode
-                                
+                                # Collect additionl details
+                                    $iFileSize = (Get-Item $sContentsLine).Length/1MB 
+                                    $iFileSize = [Math]::Round($iFileSize, 2)
+                                    $sModifDate = (Get-Item $sContentsLine).LastWriteTime
+                                    $sModifDate = $sModifDate.ToString("yyyy-MM-dd HH:mm:ss")
                                 #Verify Encode Order
                                     if($iEncodeOrder -eq 3 -and $bEncode -eq $True){
                                         Write-Verbose -Message 'Encoding now as $iEncodeOrder is set to 3'
@@ -338,7 +354,25 @@ catch{
 #endregion
 EncodeLog("Exporting File List")
 If($iEncodeOrder -eq 1 -or $iEncodeOrder -eq 2){
-$ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
+    try{
+        if($null -ne $s_CSVSort){
+            #Sort CSV contents by file size in decending order
+            if($b_CSVAscending){
+                $ffmpeg = $ffmpeg | Sort-Object -Property $s_CSVSort
+            } else {
+                $ffmpeg = $ffmpeg | Sort-Object -Property $s_CSVSort -Descending
+            }
+            
+            EncodeLog("Sorting CSV's by file size")
+        }
+    
+        $ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
+    }
+    catch{
+        $sErrorTask = "Creating CSV"
+        $sErrorMessage = $_
+        ErrorLog
+    }
 }
 If ($bDisableStatus -eq $False) {Write-Progress -Activity $activity -Status "Ready" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar         
 If ($bDeleteContents -eq $True) {
