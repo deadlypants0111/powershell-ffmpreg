@@ -23,6 +23,16 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $bAppendLog = $True # If `$False` then when a new encoding session begins, the contents of `encode.log` are cleared. If `$True` then the contents of said text file will append until cleared manually.
     $bDeleteContents = $True # If `$False` then the `contents.txt` file generated at scanning will not be deleted after `contents.csv` is created. If `$True` then `contents.txt` will be deleted after `contents.csv` is created.
     $bDeleteSource = $True # If `$True` then the source video file for each encode will be deleted entirely after encode is complete. If `$False` then the source video file is moved to `$sEncodePath\old`
+    $s_CSVSort = $null # If not `$null` then before the CSV is created, the contents will be sorted by the indicated column header. See below for examples.
+        # 'Origin_Bits_Ps' = Current media bitrate in bits per second
+        # 'height' = Current pixel height of media
+        # 'T_Bits_Ps' = Target media bitrate in bits per second
+        # 'T_height' = Target media resolution in pixels
+        # 'Encode' = True or False of media to be encoded
+        # 'F_MB' = Current file size of media in mega bytes
+        # 'Modif_Date' = Media modification date
+        # 'Path' = Media path
+    $b_CSVAscending = $True # If `$True` then when the CSV file is sorted, it will be in ascending order (Oldest/lowest first), otherwise it will be in decenging order
 # Encode Settings
     $bRemoveBeforeScan = $True # If `$True` then  all files in `$sEncodePath` are deleted prior to initiated a scan for media
     $iEncodeOrder = 3
@@ -78,6 +88,8 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
             T_Bits_Ps = $iScaleBits
             T_height = $theight
             Encode = $bEncode
+            F_MB = $iFileSize
+            Modif_Date = $sModifDate
             Path = $sContentsLine
         }
     }
@@ -296,7 +308,11 @@ catch{
                                         $bEncode = $False
                                         Write-Verbose -Message "Encoding determined not needed for path - '$sContentsLine'"
                                     } # Check if bitrate is greater than target kbp/s if so mark for encode
-                                
+                                # Collect additionl details
+                                    $iFileSize = (Get-Item $sContentsLine).Length/1MB 
+                                    $iFileSize = [Math]::Round($iFileSize, 2)
+                                    $sModifDate = (Get-Item $sContentsLine).LastWriteTime
+                                    $sModifDate = $sModifDate.ToString("yyyy-MM-dd HH:mm:ss")
                                 #Verify Encode Order
                                     if($iEncodeOrder -eq 3 -and $bEncode -eq $True){
                                         Write-Verbose -Message 'Encoding now as $iEncodeOrder is set to 3'
@@ -338,7 +354,25 @@ catch{
 #endregion
 EncodeLog("Exporting File List")
 If($iEncodeOrder -eq 1 -or $iEncodeOrder -eq 2){
-$ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
+    try{
+        if($null -ne $s_CSVSort){
+            #Sort CSV contents by file size in decending order
+            if($b_CSVAscending){
+                $ffmpeg = $ffmpeg | Sort-Object -Property $s_CSVSort
+            } else {
+                $ffmpeg = $ffmpeg | Sort-Object -Property $s_CSVSort -Descending
+            }
+            
+            EncodeLog("Sorting CSV's by file size")
+        }
+    
+        $ffmpeg | Export-Csv -Path $sExportedDataPath\contents.csv #export array to csv
+    }
+    catch{
+        $sErrorTask = "Creating CSV"
+        $sErrorMessage = $_
+        ErrorLog
+    }
 }
 If ($bDisableStatus -eq $False) {Write-Progress -Activity $activity -Status "Ready" -Completed} # If bDisableStatus is False then updates the gui terminal with status bar         
 If ($bDeleteContents -eq $True) {
