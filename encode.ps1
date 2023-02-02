@@ -8,14 +8,14 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $sEncodePath = "$sScriptPath\encode\" # The folder/path where you wish to remporarely store encodes while they are being processed. *It is recommended to use a different location from any other files.*
     $sExportedDataPath = $sScriptPath # The folder/path where you want the exported files to be generated. 'Exported files' does not include encodes.
     $bRecursiveSearch = $False # This controls if you wish to scan the entire root folder specified in `$sRootPath` for content. If `$True`, all files, folders and subfolders will be subject to at least a scan attempt. If `$False`, only the folders indicated in `$sDirectoriesCSV` will be subject to a recursive scan.
-        $sDirectoriesCSV = "D:\Anime\,D:\TV\,D:\Movies\" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
+        $sDirectoriesCSV = "D:\Anime\,G:\anime\,D:\tv\,G:\tv,D:\Movies\,G:\movies" # If you want to only have power-shell scan specific folders for media, you can indicate all paths in this variable using CSV style formatting.
     # Script Testing
     $bTestFlow = $False # If `$True` the script will follow through all normal steps without actually encoding, moving, or deleting video files
     $bTestSingleFile = $False # If `$True` Enables test mode. Test mode only scans and encodes a single source path defined in `$sTestSinglePath`. Destination file is saved to your `$sExportedDataPath`.
     $sTestSinglePath = "D:\Downloads\TestFile.mkv" # Source Path to file you want to test the script on.
     # Execution Limits
     $iLimitQueue = 0 #No limit = `0`. Limits the number of files that are encoded per execution. Once this number has been reached it will stop. It can be stopped early if also used in conjunction with `$iEncodeHours`.
-    $iEncodeHours = 0 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
+    $iEncodeHours = 18 #No limit = `0`. Limits time in hours in you allow a single script execution to run. End time will be obtained before scanning starts. It will then check that the time has not been exceeded before each encode begins.
     If ($iLimitQueue -ne 0 -or $iEncodeHours -ne 0){$bEncodeLimit = $True}Else{$bEncodeLimit = $False} # If either of the limit controllers contain values above 0, then this is marked as `$True`
 # Exported Data
     $bEncodeOnly = $True # When this is `$True`, only items identified as "needing encode" as per the `Detect Medtadata > Video Metadata > Check if encoding needed` section. If `$False` then all items will be added to the CSV regardless if encoding will take place for the file or not. *This does not change whether or not the file **will** be encoded, only if it is logged in the generated CSV file*
@@ -144,8 +144,14 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
                         $global:iStep++
                         EncodeLog "($global:iStepq) $sBasename test 'encoded' in $t_height p at $iTargetBits kbp/s | Originally $iOriginBits kbp/s"
                     }Else{
-                        If($iDestSize -lt 1){EncodeLog("Aborting file overwrite as encode file is less than 1MB")}
-                        Elseif($sDestPath -eq $False){EncodeLog("Aborting file overwrite as destination path does not exist anymore")}
+                        If($iDestSize -lt 1){
+                            EncodeLog("Aborting file overwrite as encode file is less than 1MB")
+                            Remove-Item $n_path -Force # delete failed encode
+                        }
+                        Elseif($sDestPath -eq $False){
+                            EncodeLog("Aborting file overwrite as destination path does not exist anymore")
+                            Remove-Item $n_path -Force # delete failed encode
+                    }
                         Else{EncodeLog("Aborting file overwrite as encode file does not exist anymore")}
                     }
             }
@@ -199,7 +205,10 @@ try {
     $EndTime = Get-Date
     $EndTime = $EndTime.AddHours($iEncodeHours)
     If ($bVerbose -eq $True) {$VerbosePreference = "Continue"} Else {$VerbosePreference = "SilentlyContinue"} # If verbose is on, shows verbose messages in console
-    If ($bRemoveBeforeScan -eq $True) {Remove-Item $sEncodePath -Include *.* -Recurse} # Remove old encodes
+    If ($bRemoveBeforeScan -eq $True) {
+        # Remove old encodes
+        Remove-Item $sEncodePath -Include *.* -Recurse
+    }
     if($iEncodeOrder -eq 0){
         EncodeLog('Script not running as $iEncodeOrder is equal to 0')
         Exit
