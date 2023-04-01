@@ -47,9 +47,9 @@ $sScriptPath = split-path -parent $MyInvocation.MyCommand.Definition # Gets the 
     $sResMed = "1280x720" # If pixel height is greater than `$iResMin` but less than `$iResMax` encode at this quality
     $sResMax = "1920x1080" # If pixel height is greater than `$iResMax` encode at this quality
 # Bitrate Limit
-    $iBitRateSD = 1000 # bitrate in kbps for video files with a vertical pixel count < 480
-    $iBitRate720 = 2000 # bitrate in kbps for video files with a verticle pixel count > 480 and a pixel count < 1000
-    $iBitRate1080 = 2500 # bitrate in kbps for video files with a verticle pixel count > 1000
+    $iBitRateSD = 1500 # bitrate in kbps for video files with a vertical pixel count < 480
+    $iBitRate720 = 3000 # bitrate in kbps for video files with a verticle pixel count > 480 and a pixel count < 1000
+    $iBitRate1080 = 4000 # bitrate in kbps for video files with a verticle pixel count > 1000
 # ffmpeg flags in order of use
     # `-i <inputpath>` input path for source file 
     # `-b <int>` video bitrate. Source: $_.Target_Bits_Ps
